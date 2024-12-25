@@ -8,6 +8,7 @@ import {
   InteractionResponseType,
   InteractionType,
   verifyKey,
+  verifyKeyMiddleware,
 } from 'discord-interactions';
 import { AWW_COMMAND, INVITE_COMMAND } from './commands.js';
 import { getCuteUrl } from './reddit.js';
@@ -95,16 +96,21 @@ export default {
    */
   async fetch(request, env) {
     if (request.method === 'POST') {
+      console.log('Discord Interactions Endpoint Request...')
       // Using the incoming headers, verify this request actually came from discord.
       const signature = request.headers.get('x-signature-ed25519');
       const timestamp = request.headers.get('x-signature-timestamp');
       const body = await request.clone().arrayBuffer();
+      console.log('Headers: ' + JSON.stringify(request.headers))
+      console.log('Signature: ' + JSON.stringify(signature))
+      console.log('Discord Public Key: ' + JSON.stringify(env.DISCORD_PUBLIC_KEY))
       const isValidRequest = verifyKey(
         body,
         signature,
         timestamp,
         env.DISCORD_PUBLIC_KEY
       );
+      
       if (!isValidRequest) {
         console.error('Invalid Request');
         return new Response('Bad request signature.', { status: 401 });
@@ -115,3 +121,4 @@ export default {
     return router.handle(request, env);
   },
 };
+
